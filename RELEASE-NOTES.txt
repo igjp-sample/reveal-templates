@@ -1,0 +1,2 @@
+2025-12-25
+- Revela 1.8.2 - Node.js Srever + Vanilla JS Client released
