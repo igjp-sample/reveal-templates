@@ -1046,8 +1046,6 @@ class RevealDataSources {
     get filter(): ((item: any) => Boolean) | null;
     set filter(f: ((item: any) => Boolean) | null);
     getInternal(): any;
-    /** @hidden */
-    private _transformToInternal;
 }
 
 /**
@@ -1210,6 +1208,51 @@ class DateFilterMenuOpeningEventArgs {
 //# sourceMappingURL=dateFilterMenuOpeningEventArgs.d.ts.map
 
 /**
+ * @enum
+ */
+enum RVAssetType {
+    DataSourceIcon = 0,
+    EmptyStateImage = 1,
+    LoadingIndicator = 2,
+    ErrorIcon = 3,
+    ToolbarIcon = 4,
+    VisualizationIcon = 5
+}
+//# sourceMappingURL=rvAssetType.d.ts.map
+
+/**
+ *  This class is used as argument for the event onAssetRequested
+ */
+class RVAssetRequestedArgs {
+    /**
+     * ets the type of asset represented by this instance.
+     */
+    assetType: RVAssetType | null;
+    /**
+     * Additional data or metadata that is relevant to obtain an asset.
+     */
+    context: any;
+    /** @ignore */
+    constructor(ds: any);
+}
+//# sourceMappingURL=rvAssetRequestedArgs.d.ts.map
+
+/**
+ * Uses as result of the event OnAssetRequested
+ */
+class RVAssetResult {
+    /**
+     * Path to a custom asset image
+     */
+    imageUrl: string | null;
+    /**
+     * Indicates whether the asset is visible-
+     */
+    visible: boolean;
+    constructor();
+}
+
+/**
  * Used to create a new instance of the RevealView class.
  * The main class used to render a dashboard in your application, it also allows the editing of existing dashboards or the creation from scratch.
  */
@@ -1278,7 +1321,6 @@ class RevealView {
     private _exportMode;
     private _assets;
     private _currentObserver;
-    private _themeChangedListener;
     /**
      * Instantiates a new RevealView component and renders it at the provided DOM selector location.
      * @param selector Selector to the DOM element where the RevealView should be rendered. Exception is thrown if no element is found in DOM matching the selector.
@@ -1510,7 +1552,13 @@ class RevealView {
      * If this handler is not installed Reveal will use the default dialog for selecting a data source.
      */
     onDataSourceSelectionDialogShowing: ((args: DataSourceSelectionEventArgs) => void) | null;
+    /** @internal */
     _showCustomDataSourceSelection(trigger: RVDataSourcesRequestedTriggerType, revealDataSources: any, dsItemSelected: (dsiInfo: any) => void): boolean;
+    /**
+   * Event called when a datasource icon is needed. Using it, is the way to show your own icon for specific icon for datasources instead of the default ones.
+   * If this handler is not set, the default icons are used.
+   */
+    onAssetRequested: ((args: RVAssetRequestedArgs) => RVAssetResult) | null;
     /**
        * This event is triggered when Reveal is requesting credentials for a given data source.
        * This is optional, as you can specify server side credentials for all your data sources, but if you don't
@@ -1649,14 +1697,15 @@ class RevealView {
     /**
     * Will be called when a url is needed if the user tries to follow a dashboard link.
     * If this method is not provided, the link defined in the dashboard will be used.
-    * **Note**: This callback is expected to return the modified url.
+    * **Note**: This callback is expected to return the modified url. If the return value is
+    * null or empty, then the navigation is cancelled.
     * ```javascript
     * revealView.onUrlLinkRequested = function (args) {
     *     return args.url + "&modfiedUrl=true";
     * };
     * ```
    */
-    onUrlLinkRequested: ((args: UrlLinkRequestedArgs) => string) | null;
+    onUrlLinkRequested: ((args: UrlLinkRequestedArgs) => string | null) | null;
     /**
     * This event is triggered when entering the visualization editor after selecting your data source.
     * With this event you can customize the list of fields shown in the editor by removing, renaming, or reordering fields.
@@ -2087,6 +2136,7 @@ class RevealView {
     get isPreviewDataInVisualizationEditorEnabled(): Boolean;
     set isPreviewDataInVisualizationEditorEnabled(value: Boolean);
     onDateFilterMenuOpening: ((args: DateFilterMenuOpeningEventArgs) => void) | null;
+    /** @internal */
     _invokeCustomizeDateFilterMenuItems(items: any[], cancelCallback?: () => void): void;
     convertDateFilterOption(dfmi: RVDateFilterMenuItem): any;
 }
@@ -2810,10 +2860,18 @@ class RVNumberFormattingSpec extends RVFormattingSpec {
     set negativeFormat(value: RVDashboardNegativeFormatType);
     private _applyMkFormat;
     /**
+     * @deprecated Use `abbreviationType` instead.
+     *
      * Apply M/K format. Default is false. It only applies to some of the visualizations (e.g. charts)
      */
     get applyMkFormat(): boolean;
     set applyMkFormat(value: boolean);
+    private _abbreviationType;
+    /**
+     * The large number abbreviation type (K = Thousands, M = Millions, B = Billions, T = Trillions)
+     */
+    get abbreviationType(): RVDashboardNumberAbbreviationType;
+    set abbreviationType(value: RVDashboardNumberAbbreviationType);
 }
 /**
  * The list of formatting options for a numeric data.
@@ -2881,6 +2939,35 @@ enum RVDashboardDateAggregationType {
      * Minute period
      */
     Minute = 5
+}
+/**
+ * The list of abbreviation types for large numbers.
+ */
+enum RVDashboardNumberAbbreviationType {
+    /**
+     * No Abbreviation Type
+     */
+    None = 0,
+    /**
+     * Automatically selects the most appropriate abbreviation type
+     */
+    Auto = 1,
+    /**
+     * Abbreviates the value using trillions (T).
+     */
+    T = 2,
+    /**
+     * Abbreviates the value using billions (B).
+     */
+    B = 3,
+    /**
+     * Abbreviates the value using millions (M).
+     */
+    M = 4,
+    /**
+     *  Abbreviates the value using thousands (K).
+     */
+    K = 5
 }
 
 /** This class is used to specify settings for visualizations like Choropleth or Scatter Map. */
@@ -2967,6 +3054,7 @@ class RevealSdkSettings {
     static set theme(theme: RevealTheme);
     static set enableNewCharts(value: boolean);
     static get enableNewCharts(): boolean;
+    /** @ignore */
     static addThemeChangedListener(id: string, listener: (theme: RevealTheme) => void): void;
     /**
      * Set the base url where Reveal SDK Server component is running.
@@ -3132,11 +3220,13 @@ class SdkDashboardLocalizationProvider {
     sdkDashboardDataType(internalDataType: any): RVDashboardDataType;
     sdkFormattingSpec(formatting: any): RVFormattingSpec | null;
     sdkDashboardNumberFormattingType(type: any): RVDashboardNumberFormattingType;
+    sdkDashboardNumberAbbreviationType(type: any): RVDashboardNumberAbbreviationType;
     sdkDashboardNegativeFormatType(type: any): RVDashboardNegativeFormatType;
     sdkDateAggregationType(type: any): RVDashboardDateAggregationType;
     internalFormattingDescriptor(from: RVFormattingSpec): any;
     internalDashboardNumberFormattingType(type: RVDashboardNumberFormattingType): any;
     internalDashboardNegativeFormatType(type: RVDashboardNegativeFormatType): any;
+    internalDashboardNumberAbbreviationType(type: RVDashboardNumberAbbreviationType): any;
 }
 //# sourceMappingURL=revealUtility.d.ts.map
 
@@ -5535,6 +5625,7 @@ class RVElasticsearchDataSource extends RVDashboardDataSource {
 	RVDashboardNumberFormattingType: typeof RevealApi.RVDashboardNumberFormattingType;
 	RVDashboardNegativeFormatType: typeof RevealApi.RVDashboardNegativeFormatType;
 	RVDashboardDateAggregationType: typeof RevealApi.RVDashboardDateAggregationType;
+	RVDashboardNumberAbbreviationType: typeof RevealApi.RVDashboardNumberAbbreviationType;
 }
 
 declare interface JQueryStaticIG extends JQueryStatic {
