@@ -8,7 +8,7 @@ export default defineConfig({
     open: true,
     proxy: {
       // Reveal 用のリクエストを中継
-      "^/(dashboard|DashboardFile)": {
+      "^/([Dd]ashboard|DashboardFile)": {
         target: "http://localhost:3000",
         changeOrigin: true,
       },
