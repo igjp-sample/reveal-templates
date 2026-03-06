@@ -301,6 +301,109 @@ interface IRVDashboardFilter {
 }
 //# sourceMappingURL=irvDashboardFilter.d.ts.map
 
+type nullableString = string | null;
+type nullableDate = Date | null;
+interface IKnownType {
+    getType(): string;
+}
+
+/**
+ * The base class representing a data source used in a dashboard, you can
+ * RVDataSourceItem for more information about the relationship between data source and data source items.
+ */
+abstract class RVDashboardDataSource implements IKnownType {
+    private _id;
+    private _defaultRefreshRate;
+    /**
+     * The ID of the data source
+     */
+    get id(): nullableString;
+    set id(value: nullableString);
+    private _title;
+    /**
+     *  The title of the data source as displayed to users.
+     */
+    get title(): nullableString;
+    set title(value: nullableString);
+    private _subtitle;
+    /**
+    * The subtitle of the data source, if not null will be displayed to users instead of connection information like host and database name.
+    */
+    get subtitle(): nullableString;
+    set subtitle(value: nullableString);
+    get defaultRefreshRate(): number | null;
+    /**
+    * Default value to use for "Refresh Data" setting for visualizations created using this item, expressed in minutes (e.g. 1440 = 1 day).
+    * A value of N means that whenever the visualization requests data, the engine will return data found in the cache if it's not older than N minutes -this means, if the engine fetched it from the datasource no more than N minutes before-. Set it to override the widget editor default behavior.
+    */
+    set defaultRefreshRate(v: number | null);
+    /** @hidden */
+    constructor(json?: any);
+    /** @hidden */
+    toJson(): any;
+    /** @hidden */
+    abstract getProviderKey(): string;
+    /** @hidden */
+    abstract getType(): string;
+    /** @hidden */
+    _createWrapperInstance(): any;
+    /** @hidden */
+    _getWrapper(): any;
+}
+
+/**
+ * The basic class for data source items that can be used by visualizations to get data.
+ * When getting data from a database for example, the data source object contains the information required to connect
+ * to the database (like server host and database name) and the data source item contains
+ * the information required to get the dataset itself (like table name or view name).
+ */
+abstract class RVDataSourceItem implements IKnownType {
+    private _defaultRefreshRate;
+    /** @hidden */
+    constructor(json: any);
+    constructor(dataSource: RVDashboardDataSource);
+    /** @hidden */
+    static dataSourceFactory: (json: any) => RVDashboardDataSource;
+    /** @hidden */
+    static dataSourceItemFactory: (json: any) => RVDataSourceItem;
+    /** @hidden */
+    toJson(): any;
+    private _title;
+    /** The title of the item, as displayed to the user, it might be for example the name of the table in a database. */
+    get title(): nullableString;
+    set title(value: nullableString);
+    private _subtitle;
+    /** The subtitle of the data source, if not null will be displayed to users instead of connection information like host and database name. */
+    get subtitle(): nullableString;
+    set subtitle(value: nullableString);
+    private _id;
+    /** The value that identifies this item in the data source, it might be for example the name of the schema concatenated with the table name. */
+    get id(): nullableString;
+    set id(value: nullableString);
+    private _description;
+    /** Description of this data source item. */
+    get description(): nullableString;
+    set description(value: nullableString);
+    private _dataSource;
+    /**
+     * Reference to the data source object this item belongs to.
+     */
+    get dataSource(): RVDashboardDataSource;
+    set dataSource(value: RVDashboardDataSource);
+    /**
+     * Default value to use for "Refresh Data" setting for visualizations created using this item, expressed in minutes (e.g. 1440 = 1 day).
+     * A value of N means that whenever the visualization requests data, the engine will return data found in the cache if it's not older than N minutes -this means, if the engine fetched it from the datasource no more than N minutes before-. If not set it will use the default value set in the data source object.
+     */
+    set defaultRefreshRate(v: number | null);
+    get defaultRefreshRate(): number | null;
+    /** @hidden */
+    abstract getType(): string;
+    /** @hidden */
+    _createWrapperInstance(isResourceBased?: Boolean): any;
+    /** @hidden */
+    _getWrapper(isResourceBased?: Boolean): any;
+}
+
 /** Class used to represent a dashboard filter. */
 class RVDashboardFilter implements IRVDashboardFilter {
     /** @ignore */
@@ -309,8 +412,9 @@ class RVDashboardFilter implements IRVDashboardFilter {
     _dashboard: RVDashboard;
     /** @ignore */
     _selectedValues: Array<Object>;
+    dataSourceItem: RVDataSourceItem | null;
     /** @ignore */
-    constructor(filterModel: any);
+    constructor(dashboard: any, filterModel: any);
     /** The ID of the filter. */
     get id(): string;
     /** The title of the filter. */
@@ -325,6 +429,8 @@ class RVDashboardFilter implements IRVDashboardFilter {
      */
     getFilterValues(): Promise<RVFilterValue[]>;
     getFilterValues(callback: (values: RVFilterValue[]) => void, errorCallback: (error: any) => void): void;
+    /** @hidden */
+    _setSelectedValuesInternal(values: object[]): void;
 }
 //# sourceMappingURL=rvDashboardFilter.d.ts.map
 
@@ -339,7 +445,7 @@ class RVDateDashboardFilter {
      */
     get dateFilterType(): RVDateFilterType;
     /** @ignore */
-    _filterChanged: ((filter: RVDateDashboardFilter) => void) | null;
+    _filterChanged: ((filter: RVDateDashboardFilter, oldValue: any) => void) | null;
     /**
      * The date rule used for filtering.
      * If set to a non-null value, it will null out the filter's CustomDateRange property.
@@ -358,6 +464,8 @@ class RVDateDashboardFilter {
     get title(): string;
     /** @ignore */
     set title(v: string);
+    /** @ignore */
+    _getFilterValue(): RVDateRange | RVDateRule | RVDateFilterType.AllTime | RVDateFilterType.LastWeek | RVDateFilterType.LastMonth | RVDateFilterType.LastYear | RVDateFilterType.YearToDate | RVDateFilterType.QuarterToDate | RVDateFilterType.MonthToDate | RVDateFilterType.Yesterday | RVDateFilterType.Today | RVDateFilterType.ThisMonth | RVDateFilterType.ThisQuarter | RVDateFilterType.ThisYear | RVDateFilterType.PreviousMonth | RVDateFilterType.PreviousQuarter | RVDateFilterType.PreviousYear | RVDateFilterType.NextMonth | RVDateFilterType.NextQuarter | RVDateFilterType.NextYear | RVDateFilterType.TrailingTwelveMonths | null;
 }
 //# sourceMappingURL=rvDateDashboardFilter.d.ts.map
 
@@ -833,56 +941,6 @@ class VisualizationEditorOpenedEventArgs {
 }
 //# sourceMappingURL=visualizationEditorOpenedEventArgs.d.ts.map
 
-type nullableString = string | null;
-type nullableDate = Date | null;
-interface IKnownType {
-    getType(): string;
-}
-
-/**
- * The base class representing a data source used in a dashboard, you can
- * RVDataSourceItem for more information about the relationship between data source and data source items.
- */
-abstract class RVDashboardDataSource implements IKnownType {
-    private _id;
-    private _defaultRefreshRate;
-    /**
-     * The ID of the data source
-     */
-    get id(): nullableString;
-    set id(value: nullableString);
-    private _title;
-    /**
-     *  The title of the data source as displayed to users.
-     */
-    get title(): nullableString;
-    set title(value: nullableString);
-    private _subtitle;
-    /**
-    * The subtitle of the data source, if not null will be displayed to users instead of connection information like host and database name.
-    */
-    get subtitle(): nullableString;
-    set subtitle(value: nullableString);
-    get defaultRefreshRate(): number | null;
-    /**
-    * Default value to use for "Refresh Data" setting for visualizations created using this item, expressed in minutes (e.g. 1440 = 1 day).
-    * A value of N means that whenever the visualization requests data, the engine will return data found in the cache if it's not older than N minutes -this means, if the engine fetched it from the datasource no more than N minutes before-. Set it to override the widget editor default behavior.
-    */
-    set defaultRefreshRate(v: number | null);
-    /** @hidden */
-    constructor(json?: any);
-    /** @hidden */
-    toJson(): any;
-    /** @hidden */
-    abstract getProviderKey(): string;
-    /** @hidden */
-    abstract getType(): string;
-    /** @hidden */
-    _createWrapperInstance(): any;
-    /** @hidden */
-    _getWrapper(): any;
-}
-
 /**
  * @enum
  */
@@ -918,59 +976,6 @@ class DashboardSelectorRequestedEventArgs {
     callback: (dashboardId: string) => void | null;
     /** @ignore */
     constructor(callback: (dashboardId: string) => void);
-}
-
-/**
- * The basic class for data source items that can be used by visualizations to get data.
- * When getting data from a database for example, the data source object contains the information required to connect
- * to the database (like server host and database name) and the data source item contains
- * the information required to get the dataset itself (like table name or view name).
- */
-abstract class RVDataSourceItem implements IKnownType {
-    private _defaultRefreshRate;
-    /** @hidden */
-    constructor(json: any);
-    constructor(dataSource: RVDashboardDataSource);
-    /** @hidden */
-    static dataSourceFactory: (json: any) => RVDashboardDataSource;
-    /** @hidden */
-    static dataSourceItemFactory: (json: any) => RVDataSourceItem;
-    /** @hidden */
-    toJson(): any;
-    private _title;
-    /** The title of the item, as displayed to the user, it might be for example the name of the table in a database. */
-    get title(): nullableString;
-    set title(value: nullableString);
-    private _subtitle;
-    /** The subtitle of the data source, if not null will be displayed to users instead of connection information like host and database name. */
-    get subtitle(): nullableString;
-    set subtitle(value: nullableString);
-    private _id;
-    /** The value that identifies this item in the data source, it might be for example the name of the schema concatenated with the table name. */
-    get id(): nullableString;
-    set id(value: nullableString);
-    private _description;
-    /** Description of this data source item. */
-    get description(): nullableString;
-    set description(value: nullableString);
-    private _dataSource;
-    /**
-     * Reference to the data source object this item belongs to.
-     */
-    get dataSource(): RVDashboardDataSource;
-    set dataSource(value: RVDashboardDataSource);
-    /**
-     * Default value to use for "Refresh Data" setting for visualizations created using this item, expressed in minutes (e.g. 1440 = 1 day).
-     * A value of N means that whenever the visualization requests data, the engine will return data found in the cache if it's not older than N minutes -this means, if the engine fetched it from the datasource no more than N minutes before-. If not set it will use the default value set in the data source object.
-     */
-    set defaultRefreshRate(v: number | null);
-    get defaultRefreshRate(): number | null;
-    /** @hidden */
-    abstract getType(): string;
-    /** @hidden */
-    _createWrapperInstance(isResourceBased?: Boolean): any;
-    /** @hidden */
-    _getWrapper(isResourceBased?: Boolean): any;
 }
 
 /**
@@ -1252,6 +1257,16 @@ class RVAssetResult {
     constructor();
 }
 
+/** Class used as the argument to the filterValueChanged event. */
+class FilterValueChangedEventArgs {
+    readonly source: any;
+    readonly filter: any;
+    readonly oldValue: any;
+    readonly newValue: any;
+    constructor(source: any, filter: any, oldValue: any, newValue: any);
+}
+//# sourceMappingURL=filterValueChangedEventArgs.d.ts.map
+
 /**
  * Used to create a new instance of the RevealView class.
  * The main class used to render a dashboard in your application, it also allows the editing of existing dashboards or the creation from scratch.
@@ -1353,7 +1368,7 @@ class RevealView {
      * @see RVDashboard#getFilterByTitle
      * @internal
      */
-    _setGlobalFilterSelectedValues(filter: RVDashboardFilter, selectedValues: Array<object>): void;
+    _setGlobalFilterSelectedValues(filter: RVDashboardFilter, oldValues: Array<object>, selectedValues: Array<object>): void;
     /**
      * Sets the selected values for the given quick filter
      *
@@ -1704,7 +1719,7 @@ class RevealView {
     *     return args.url + "&modfiedUrl=true";
     * };
     * ```
-   */
+    */
     onUrlLinkRequested: ((args: UrlLinkRequestedArgs) => string | null) | null;
     /**
     * This event is triggered when entering the visualization editor after selecting your data source.
@@ -1972,9 +1987,9 @@ class RevealView {
     get singleVisualizationMode(): Boolean;
     set singleVisualizationMode(v: Boolean);
     /**
-   * Gets the visibility of the chart toolbar.
-   * @returns {Boolean} - Returns true if the toolbar is visible on hover; false otherwise. Default is false.
-   */
+     * Gets the visibility of the chart toolbar.
+     * @returns {Boolean} - Returns true if the toolbar is visible on hover; false otherwise. Default is false.
+     */
     get showToolbar(): Boolean;
     /**
      * Sets the visibility of the chart toolbar.
@@ -2032,7 +2047,7 @@ class RevealView {
     get showExportToExcel(): Boolean;
     set showExportToExcel(v: Boolean);
     /** A flag indicating if the export to PowerPoint action is available or not.
-     *  @default true */
+     *  @default false */
     get showExportToPowerPoint(): Boolean;
     set showExportToPowerPoint(v: Boolean);
     /** A flag indicating if the export to PDF action is available or not.
@@ -2136,8 +2151,12 @@ class RevealView {
     get isPreviewDataInVisualizationEditorEnabled(): Boolean;
     set isPreviewDataInVisualizationEditorEnabled(value: Boolean);
     onDateFilterMenuOpening: ((args: DateFilterMenuOpeningEventArgs) => void) | null;
+    onFilterValueChanged: ((args: FilterValueChangedEventArgs) => void) | null;
     /** @internal */
     _invokeCustomizeDateFilterMenuItems(items: any[], cancelCallback?: () => void): void;
+    _invokeFilterValueChanged(source: any, filter: any, oldSelection: any, newSelection: any): void;
+    private getPublicApiFilter;
+    private toPublicApiType;
     convertDateFilterOption(dfmi: RVDateFilterMenuItem): any;
 }
 
@@ -2211,7 +2230,7 @@ class RVDashboard {
     /** @hidden */
     static _create(dashboardModel: any, dashboardId: string | null): RVDashboard;
     private _loadFilters;
-    dateFilterChanged(filter: RVDateDashboardFilter): void;
+    dateFilterChanged(filter: RVDateDashboardFilter, oldValue: any): void;
     private _getRVFilter;
     private _loadVisualizations;
     /**
@@ -2316,17 +2335,17 @@ class RVDashboard {
     /** @hidden */
     _unsubscribeView(revealView: RevealView): void;
     /** @hidden */
-    _updateFilterSelectedValues(filter: RVDashboardFilter, selectedValues: Array<object>): void;
+    _updateFilterSelectedValues(filter: RVDashboardFilter, oldValues: Array<object>): void;
     /** @hidden */
-    _notifyViewsThatGlobalFilterSelectedValuesChanged(revealView: RevealView | null): void;
+    _notifyViewsThatGlobalFilterSelectedValuesChanged(filter: RVDashboardFilter, oldValues: Array<object>, originatorView?: RevealView | null): void;
     /** @hidden */
-    _notifyViewsThatDateFilterChanged(dateFilter: RVDateDashboardFilter, revealView?: RevealView | null): void;
+    _notifyViewsThatDateFilterChanged(dateFilter: RVDateDashboardFilter, oldValue: any, revealView?: RevealView | null): void;
     /** @hidden */
     _userFilterChanged(revealView: RevealView, filterModel: any): void;
     /** @hidden */
     _userDateFilterChanged(revealView: RevealView, filterModel: any): void;
     /** @hidden */
-    notifyQuickFilterSelectedValuesChanged(filters: Array<RVVisualizationFilter>): void;
+    notifyQuickFilterSelectedValuesChanged(modifiedFilter: RVVisualizationFilter, oldValues: Array<RVFilterValue>, filters: Array<RVVisualizationFilter>): void;
 }
 
 /**
@@ -2375,12 +2394,13 @@ class RVVisualization {
     private getReferenceDataSourceItem;
     get filters(): QuickFiltersArray;
     /**
-   * Analyze the widget model and update the values that are to be returned by the Filters property.
-   */
+     * Analyze the widget model and update the values that are to be returned by the Filters property.
+     */
     loadFilters(): void;
-    updateFilterSelectedValues(filter: RVVisualizationFilter, selectedValues: Array<RVFilterValue>): boolean;
+    static getRVDataSourceItem(dashboard: any | null, dsItem: any): RVDataSourceItem | null;
+    updateFilterSelectedValues(filter: RVVisualizationFilter): boolean;
     /** @hidden */
-    _notifyViewsThatQuickFilterSelectedValuesChanged(): void;
+    _notifyViewsThatQuickFilterSelectedValuesChanged(filter: any, oldValues: Array<RVFilterValue>): void;
 }
 
 /** The class is used to render the thumbnail of a dashboard in your application.
@@ -3009,8 +3029,6 @@ enum RVMapImageryType {
 class BetaFeatures {
     static readonly interactiveFiltering = "interactiveFiltering";
     static readonly newGauges = "newGauges";
-    static readonly newPieChart = "newPieChart";
-    static readonly newDonutChart = "newDonutChart";
     static readonly decimalPrecision = "decimalPrecision";
     static readonly newTooltips = "newTooltips";
     constructor();
@@ -3229,20 +3247,6 @@ class SdkDashboardLocalizationProvider {
     internalDashboardNumberAbbreviationType(type: RVDashboardNumberAbbreviationType): any;
 }
 //# sourceMappingURL=revealUtility.d.ts.map
-
-/** The class used as the argument to the onFiltersChanged event. */
-class FilterChangedEventArgs {
-    /** @ignore */
-    _filter: RVDashboardFilter;
-    /** @ignore */
-    _selectedValues: Array<Object>;
-    constructor(filter: RVDashboardFilter, selectedValues: Array<Object>);
-    /** Gets filter instance. */
-    get filter(): RVDashboardFilter;
-    /** Gets selected values. */
-    get selectedValues(): Array<Object>;
-}
-//# sourceMappingURL=filterChangedEventArgs.d.ts.map
 
 /**
  * Class representing the event arguments for VisualizationDataLoading event
@@ -3730,6 +3734,48 @@ class RVMySqlDataSourceItem extends RVSqlPDSDataSourceItem {
     _getWrapper(): any;
 }
 
+/** MariaDB data source */
+class RVMariaDBDataSource extends RVSqlPDSDataSource {
+    constructor();
+    /** @hidden */
+    constructor(json: any);
+    /** @hidden */
+    toJson(): any;
+    /** @hidden */
+    getProviderKey(): string;
+    private _database;
+    /** Name of the database to connect to. */
+    get database(): nullableString;
+    set database(value: nullableString);
+    /** @hidden */
+    getType(): string;
+    /** @hidden */
+    _getWrapper(): any;
+}
+
+/** MariaDB data source item */
+class RVMariaDBDataSourceItem extends RVSqlPDSDataSourceItem {
+    constructor(dataSource: RVMariaDBDataSource);
+    /** @hidden */
+    constructor(json: any);
+    /** @hidden */
+    toJson(): any;
+    private _procedure;
+    /** (Optional) name of the stored procedure to get data from, the procedure is expected to return a result set and might
+     * have multiple parameters.
+     */
+    get procedure(): nullableString;
+    set procedure(value: nullableString);
+    private _procedureParameters;
+    /**Parameters to be passed to the stored procedure, if there is such specified in   {@link RVMariaDBDataSourceItem.procedure} . */
+    get procedureParameters(): any;
+    set procedureParameters(value: any);
+    /** @hidden */
+    getType(): string;
+    /** @hidden */
+    _getWrapper(): any;
+}
+
 /**
  * Amazon Athena data source
  */
@@ -3998,6 +4044,14 @@ class RVRedshiftDataSourceItem extends RVSqlBasedDataSourceItem {
     /** Parameters to be passed to the function, if there is such specified in {@link RVPostgresDataSourceItem.functionName}.*/
     get functionParameters(): any;
     set functionParameters(value: any);
+    private _procedure;
+    /** (Optional) name of the stored procedure to get data from. The procedure is expected to have a REFCURSOR inout parameter and might have additional input parameters. */
+    get procedure(): nullableString;
+    set procedure(value: nullableString);
+    private _procedureParameters;
+    /** Parameters to be passed to the stored procedure, if there is such specified in {@link RVRedshiftDataSourceItem.procedure}.*/
+    get procedureParameters(): any;
+    set procedureParameters(value: any);
     /** @hidden */
     getType(): string;
     /** @hidden */
@@ -5491,6 +5545,7 @@ class RVElasticsearchDataSource extends RVDashboardDataSource {
 	RVDashboardFilter: typeof RevealApi.RVDashboardFilter;
 	RVDateFilterType: typeof RevealApi.RVDateFilterType;
 	RVDateDashboardFilter: typeof RevealApi.RVDateDashboardFilter;
+	RVVisualizationFilter: typeof RevealApi.RVVisualizationFilter;
 	RVDateRange: typeof RevealApi.RVDateRange;
 	RVDateRule: typeof RevealApi.RVDateRule;
 	RVDateFilterMenuOption: typeof RevealApi.RVDateFilterMenuOption;
@@ -5511,7 +5566,6 @@ class RVElasticsearchDataSource extends RVDashboardDataSource {
 	DashboardSaveEventArgs: typeof RevealApi.DashboardSaveEventArgs;
 	VisualizationEditorClosingArgs: typeof RevealApi.VisualizationEditorClosingArgs;
 	VisualizationEditorClosedEventArgs: typeof RevealApi.VisualizationEditorClosedEventArgs;
-	FilterChangedEventArgs: typeof RevealApi.FilterChangedEventArgs;
 	DataSourceSelectionEventArgs: typeof RevealApi.DataSourceSelectionEventArgs;
 	RVDataSourceSelection: typeof RevealApi.RVDataSourceSelection;
 	VisualizationDataLoadingEventArgs: typeof RevealApi.VisualizationDataLoadingEventArgs;
@@ -5530,6 +5584,8 @@ class RVElasticsearchDataSource extends RVDashboardDataSource {
 	RVCsvDataSourceItem: typeof RevealApi.RVCsvDataSourceItem;
 	RVMySqlDataSource: typeof RevealApi.RVMySqlDataSource;
 	RVMySqlDataSourceItem: typeof RevealApi.RVMySqlDataSourceItem;
+	RVMariaDBDataSource: typeof RevealApi.RVMariaDBDataSource;
+	RVMariaDBDataSourceItem: typeof RevealApi.RVMariaDBDataSourceItem;
 	RVAthenaDataSource: typeof RevealApi.RVAthenaDataSource;
 	RVAthenaDataSourceItem: typeof RevealApi.RVAthenaDataSourceItem;
 	RVS3DataSource: typeof RevealApi.RVS3DataSource;
