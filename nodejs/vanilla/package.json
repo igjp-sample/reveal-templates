@@ -13,7 +13,8 @@
     "build:client": "npm run build --workspace=client",
     "build:server": "npm run build --workspace=server",
     "build": "npm run build:client && npm run build:server",
-    "preview": "cd ./dist && node server.js"
+    "preview": "cd ./dist && node server.js",
+    "rebuild:native": "npm rebuild reveal-sdk-node --ignore-scripts=false --foreground-scripts"
   },
   "devDependencies": {
     "concurrently": "^10.0.3"
