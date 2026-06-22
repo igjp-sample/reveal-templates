@@ -16,6 +16,6 @@
     "preview": "cd ./dist && node server.js"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^10.0.3"
   }
 }

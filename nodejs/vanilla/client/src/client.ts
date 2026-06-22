@@ -1,14 +1,22 @@
-const dashboard = await new Promise<RevealApi.RVDashboard>((resolve) => $.ig.RVDashboard.loadDashboard("Manufacturing", resolve));
+import {
+  RVDashboard,
+  RevealView,
+  RVLocalFileDataSourceItem,
+  RVExcelDataSourceItem,
+  RevealDataSources,
+} from "reveal-sdk";
 
-const revealView = new $.ig.RevealView("#revealView");
+const dashboard = await RVDashboard.loadDashboard("Manufacturing");
+
+const revealView = new RevealView("#revealView");
 revealView.dashboard = dashboard;
 
 revealView.onDataSourcesRequested = (callback) => {
   // An example of a local Excel file data source
-  const localFileItem = new $.ig.RVLocalFileDataSourceItem();
+  const localFileItem = new RVLocalFileDataSourceItem();
   localFileItem.uri = "local:/Samples.xlsx";
-  const excelDataSourceItem = new $.ig.RVExcelDataSourceItem(localFileItem);
+  const excelDataSourceItem = new RVExcelDataSourceItem(localFileItem);
   excelDataSourceItem.title = "Local Excel File";
 
-  callback(new $.ig.RevealDataSources([], [excelDataSourceItem], true));
+  callback(new RevealDataSources([], [excelDataSourceItem], true));
 };

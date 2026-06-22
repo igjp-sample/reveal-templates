@@ -27,7 +27,6 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "src",
-    "public/assets/reveal/infragistics.reveal.d.ts"
+    "src"
   ]
 }
