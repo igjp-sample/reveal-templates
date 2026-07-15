@@ -15,6 +15,16 @@ npm ci
 npm run dev
 ```
 
+## Build and deploy
+
+Running the following command generates the contents for deployment in the `./dist` folder.
+
+```bash
+npm run build
+```
+
+You can run the application from the generated `./dist` folder by executing `npm start` in it. A `web.config` file is also placed in the `./dist` folder so that the application can be deployed to Azure Web Apps.
+
 ## Troubleshooting
 
 ### `RevealEnginePrg.exe ENOENT` error when running the app
