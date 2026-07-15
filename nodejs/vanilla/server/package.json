@@ -5,11 +5,11 @@
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/server.ts",
     "build": "tsc && npm run copy",
-    "copy": "copyfiles \"dashboards/**/*\" \"data/**/*\" \"public/**/*\" ../dist"
+    "copy": "copyfiles \"dashboards/**/*\" \"data/**/*\" \"public/**/*\" \"web.config\" ../dist"
   },
   "dependencies": {
     "express": "~5.2.1",
-    "reveal-sdk-node": "~2.0.0"
+    "reveal-sdk-node": "2.1.0"
   },
   "devDependencies": {
     "@types/express": "~5.0.6",
