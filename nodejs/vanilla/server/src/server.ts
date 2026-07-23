@@ -8,8 +8,12 @@ app.use(express.static("public"));
 const revealOptions: RevealOptions = {
   localFileStoragePath: "data",
 };
+if (process.env.REVEAL_LICENSE_KEY) {
+  revealOptions.license = process.env.REVEAL_LICENSE_KEY;
+}
 app.use("/", reveal(revealOptions));
 
-app.listen(3000, () => {
-  console.info(`RevealServer is running on http://localhost:3000/`);
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.info(`RevealServer is running on http://localhost:${port}/`);
 });
