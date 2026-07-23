@@ -51,6 +51,21 @@ npm run rebuild:native
 
 After it completes, start the app again with `npm run dev`.
 
+## Deploy to Azure App Service
+
+### Configurations
+
+Set your Reveal license key in the `REVEAL_LICENSE_KEY` environment variable.
+
+> [!NOTE]
+> The Node.js version requires a 64-bit environment, so the free plan (F1) of Azure App Service Plans cannot be used.
+
+### Node.js + Vanilla
+
+1. Run `npm run build` to generate the deployment contents in the `./dist` folder.
+2. Compress the files inside `./dist` into a `.zip` file. Make sure `server.js` and the other files and folders sit at the root of the `.zip` (no extra subfolder).
+3. In the Azure App Service portal, open "Deployment Center", choose "Publish files" from "Source", select the `.zip` in the file input that appears, and click "Save". The `.zip` is uploaded, extracted, and the app starts running.
+
 ## Licensing
 
 This repository is licensed under the [Unlicense](LICENSE).
