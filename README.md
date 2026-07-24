@@ -58,7 +58,7 @@ After it completes, start the app again with `npm run dev`.
 Set your Reveal license key in the `REVEAL_LICENSE_KEY` environment variable.
 
 > [!NOTE]
-> The Node.js version requires a 64-bit environment, so the free plan (F1) of Azure App Service Plans cannot be used.
+> The Node.js version requires a 64-bit environment, so the Free (F1) and Shared (D1) tiers of Azure App Service Plans cannot be used. You need the Basic (B1) tier or higher.
 
 ### Node.js + Vanilla
 
